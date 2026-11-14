@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://quantum-stock-classifier.onrender.com";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -22,7 +22,7 @@ export async function runStockClassifier(ticker) {
       throw new Error("The quantum simulation timed out. Please try again.");
     }
     throw new Error(
-      "Unable to reach the backend server at http://localhost:5000. Ensure Flask is running."
+      "Unable to reach the backend API server. If on Render free tier, the server may be waking up from sleep (takes ~30-50s on first request)."
     );
   }
 }

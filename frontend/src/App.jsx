@@ -99,7 +99,7 @@ export default function App() {
           <div className="flex items-center gap-3 self-start md:self-auto text-xs text-slate-400">
             <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Flask API: <strong>localhost:5001</strong></span>
+              <span>Backend: <strong>Render Cloud (Active)</strong></span>
             </div>
             <div className="hidden sm:block text-[11px] text-slate-500 font-mono">
               Qiskit 1.4 &bull; Scikit-Learn
