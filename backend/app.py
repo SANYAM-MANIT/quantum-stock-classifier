@@ -8,18 +8,8 @@ from models import run_comparison_pipeline
 
 app = Flask(__name__)
 
-# Enable CORS for Vite default dev server (http://localhost:5173) and local aliases
-CORS(
-    app,
-    resources={
-        r"/api/*": {
-            "origins": [
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-            ]
-        }
-    },
-)
+# Enable CORS for all origins (local dev + Vercel deployment)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # In-memory cache keyed by uppercase ticker symbol
 RESULTS_CACHE = {}
