@@ -433,7 +433,7 @@ with tab_acc:
             f"{svm['training_time']:.2f}s"
         ]
     })
-    st.dataframe(comp_table, use_container_width=True, hide_index=True)
+    st.table(comp_table)
 
 # ---------------------------------------------------------
 # Tab 3: Model Scorecards (Confusion Matrix)
