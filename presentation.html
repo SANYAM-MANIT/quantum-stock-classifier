@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Support Vector Machine | MANIT Bhopal Presentation</title>
+  <!-- KaTeX for crisp LaTeX math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body);"></script>
+  <style>
+    :root {
+      --bg: #0a0f1d;
+      --card-bg: #131b2e;
+      --border: #253352;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --cyan: #38bdf8;
+      --indigo: #818cf8;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    /* Slide Container */
+    #slide-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 3rem;
+    }
+    .slide {
+      position: absolute;
+      width: 100%;
+      max-width: 1300px;
+      height: 90vh;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translateY(10px);
+      overflow-y: auto;
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Controls Bar */
+    #controls {
+      height: 56px;
+      background: #060913;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      z-index: 100;
+    }
+    .btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 0.4rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #334155; color: #fff; }
+    #progress-bar {
+      position: absolute;
+      bottom: 56px;
+      left: 0;
+      height: 3px;
+      background: var(--cyan);
+      transition: width 0.3s ease;
+    }
+    /* Typography & Components */
+    .tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--cyan);
+      margin-bottom: 0.4rem;
+    }
+    h1 { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; line-height: 1.2; }
+    h2 { font-size: 1.7rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
+    p.subtitle { font-size: 1rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 0.5rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; margin-top: 0.5rem; }
+    .card {
+      background: rgba(10, 15, 29, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.2rem;
+    }
+    .card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .card p, .card li { font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; }
+    .card ul { padding-left: 1.2rem; margin-top: 0.5rem; }
+    .card li { margin-bottom: 0.4rem; }
+    .code-box {
+      background: #050811;
+      border: 1px solid #1e293b;
+      padding: 1rem;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #38bdf8;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin-top: 0.75rem;
+      white-space: pre;
+    }
+    .highlight-pill {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--cyan);
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.8rem;
+    }
+    table.data-table th, table.data-table td {
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid #1e293b;
+      text-align: left;
+    }
+    table.data-table th { color: var(--muted); background: #050811; }
+  </style>
+</head>
+<body>
+
+  <div id="slide-viewport">
+
+    <!-- SLIDE 1: Title Slide -->
+    <div class="slide active">
+      <div style="border-left: 4px solid var(--cyan); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="tag">Maulana Azad National Institute of Technology (MANIT), Bhopal</div>
+        <div style="font-size: 0.95rem; color: var(--muted); margin-bottom: 0.8rem;">
+          Department of Computer Science & Engineering • Minor Project Session 2026–2027
+        </div>
+        <h1>Quantum Support Vector Machine</h1>
+        <h2 style="color: var(--indigo); font-size: 1.5rem;">A Quantum Kernel Paradigm for Supervised Classification</h2>
+        <p style="color: var(--muted); font-size: 1rem; margin-top: 0.5rem;">
+          Comparative Study & Full-Stack Implementation on Stock Market Trend Prediction
+        </p>
+      </div>
+
+      <div class="grid-2" style="margin-top: auto;">
+        <div class="card" style="border-color: rgba(56, 189, 248, 0.3);">
+          <h3 style="color: var(--cyan);">Submitted By:</h3>
+          <ul style="list-style: none; padding-left: 0;">
+            <li style="font-weight: 600;">• Sahil Pal <span style="color: var(--muted); font-weight: normal;">(24112011120)</span></li>
+            <li style="font-weight: 600;">• Sanyam Jain <span style="color: var(--muted); font-weight: normal;">(24112011119)</span></li>
+            <li style="font-weight: 600;">• Akshay Khichi <span style="color: var(--muted); font-weight: normal;">(24112011127)</span></li>
+            <li style="font-weight: 600;">• Prince Nautiyal <span style="color: var(--muted); font-weight: normal;">(24112011124)</span></li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: rgba(52, 211, 153, 0.3);">
+          <h3 style="color: var(--emerald);">Guided By:</h3>
+          <p style="font-size: 1.2rem; font-weight: 700; color: #fff;">Dr. Akhtar Rasool</p>
+          <p style="color: var(--muted); margin-top: 0.3rem;">
+            Assistant Professor<br>Department of Computer Science & Engineering<br>MANIT Bhopal
+          </p>
+          <p style="color: var(--amber); font-weight: 600; margin-top: 0.8rem;">Date: 16 November 2026</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Agenda -->
+    <div class="slide">
+      <div class="tag">Overview</div>
+      <h1>Presentation Agenda</h1>
+      <p class="subtitle">Complete technical flow from classical foundations to quantum algorithms and live financial implementation.</p>
+      <div class="grid-3">
+        <div class="card">
+          <h3 style="color: var(--cyan);">01. Classical SVM Foundations</h3>
+          <p>Margin maximization, support vectors, soft-margin formulation, dual Lagrangian, and Mercer's kernel trick.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--indigo);">02. The Quantum Transition</h3>
+          <p>Why SVMs are naturally suited for quantum computers: inner product evaluations and exponential $2^n$ Hilbert space.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--emerald);">03. QSVM Mathematical Formulations</h3>
+          <p>HHL-based least-squares QSVM (Rebentrost et al.) vs hybrid quantum kernel estimation (Havlíček et al., 2019).</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--amber);">04. Quantum Circuits & Feature Maps</h3>
+          <p>Second-order Pauli $ZZ$ Feature Map, 4-qubit register, and compute-uncompute inversion testing.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--rose);">05. Project Application: Stock Trends</h3>
+          <p>Predicting next-day price direction (UP/DOWN) using 5-year OHLCV feeds, technical indicators, and $[0, \pi]$ scaling.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--cyan);">06. Results, 700× Speedup & App</h3>
+          <p>Vectorized Hermitian simulation optimization, empirical results on Indian & US equities, Streamlit live UI, and limitations.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Classical SVM Working -->
+    <div class="slide">
+      <div class="tag">Part 1: Classical Machine Learning</div>
+      <h1>Classical Support Vector Machine: The Maximum Margin Principle</h1>
+      <p class="subtitle">Supervised binary classification grounded in Vapnik-Chervonenkis structural risk minimization.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyan);">Geometric Margin & Support Vectors</h3>
+          <ul>
+            <li><strong>Decision Hyperplane:</strong> Separates classes using $w \cdot x + b = 0$.</li>
+            <li><strong>Margin Maximization:</strong> Maximizes the geometric margin $\frac{2}{\|w\|}$, reducing overfitting bounds.</li>
+            <li><strong>Support Vectors:</strong> Only points lying on boundary margins $y_i(w \cdot x_i + b) = 1$ dictate the decision plane; all interior points can be discarded.</li>
+            <li><strong>Soft-Margin Primal Problem:</strong>
+              $$\min_{w, b, \xi} \frac{1}{2}\|w\|^2 + C \sum_{i=1}^M \xi_i \quad \text{s.t.} \quad y_i(w \cdot x_i + b) \ge 1 - \xi_i$$
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--indigo);">Lagrangian Dual Formulation</h3>
+          <ul>
+            <li>Converting primal to dual via Karush-Kuhn-Tucker (KKT) conditions:
+              $$\max_{\alpha} \sum_{i=1}^M \alpha_i - \frac{1}{2} \sum_{i,j=1}^M \alpha_i \alpha_j y_i y_j (x_i \cdot x_j)$$
+              $$\text{s.t.} \quad 0 \le \alpha_i \le C \quad \text{and} \quad \sum_{i=1}^M \alpha_i y_i = 0$$
+            </li>
+            <li><strong>Crucial Property:</strong> Data enters <em>strictly via inner products</em> $(x_i \cdot x_j)$!</li>
+            <li><strong>Decision Function:</strong> $f(x) = \text{sign}\left( \sum_{i=1}^M \alpha_i y_i (x_i \cdot x) + b \right)$</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: The Kernel Trick -->
+    <div class="slide">
+      <div class="tag">Part 1: Classical Machine Learning</div>
+      <h1>The Kernel Trick: Overcoming Non-Linearity</h1>
+      <p class="subtitle">Operating implicitly in high-dimensional feature spaces without computing coordinates.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--emerald);">The Kernel Principle</h3>
+          <ul>
+            <li>Real-world data (such as financial markets) is rarely linearly separable in input space $\mathbb{R}^N$.</li>
+            <li>We map data to a higher-dimensional space $\mathcal{H}$ via non-linear mapping $\phi(x)$.</li>
+            <li><strong>The Trick:</strong> We never explicitly compute $\phi(x)$. We replace inner product $\langle \phi(x_i), \phi(x_j) \rangle$ with a kernel function $k(x_i, x_j)$.</li>
+            <li><strong>Mercer's Condition:</strong> Any symmetric, positive semi-definite continuous function satisfies:
+              $$k(x, x') = \langle \phi(x), \phi(x') \rangle$$
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--amber);">Standard Classical Kernels & Bottleneck</h3>
+          <ul>
+            <li><strong>Linear:</strong> $k(x, x') = x \cdot x'$</li>
+            <li><strong>Polynomial:</strong> $k(x, x') = (x \cdot x' + c)^d$</li>
+            <li><strong>RBF (Gaussian):</strong> $k(x, x') = \exp(-\gamma \|x - x'\|^2)$ (maps to infinite-dimensional RKHS based on Euclidean distance).</li>
+            <li><strong>The Classical Bottleneck:</strong> Classical kernels are constrained to functions efficiently computable on classical CPUs and treat feature space as local metric balls. Can quantum states unlock richer non-linear correlations?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Why Quantum? -->
+    <div class="slide">
+      <div class="tag">Part 2: The Quantum Transition</div>
+      <h1>The Quantum Leap: Why Combine Quantum & SVM?</h1>
+      <p class="subtitle">The natural mathematical synergy between quantum state overlaps and kernel methods.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyan);">1. Natural Inner Product Evaluator</h3>
+          <p>SVM needs only inner products $k(x_i, x_j)$. Quantum hardware cannot easily output large vectors without tomography, but it natively measures quantum state overlaps (fidelity $|\langle \psi(x_i) | \psi(x_j) \rangle|^2$) through interference!</p>
+          <h3 style="color: var(--indigo); margin-top: 1rem;">2. Exponential Hilbert Space</h3>
+          <p>An $n$-qubit register lives in a $2^n$-dimensional Hilbert space. A modest 4-qubit system spans 16 dimensions; 20 qubits span 1,048,576 dimensions; 50 qubits span $\approx 1.1 \times 10^{15}$ dimensions!</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--emerald);">3. Classically Intractable Kernels</h3>
+          <p>Havlíček et al. (Nature, 2019) proved that quantum circuits with non-commuting entangling gates generate kernels conjectured to be hard to estimate classically.</p>
+          <h3 style="color: var(--amber); margin-top: 1rem;">4. Guaranteed Convex Optimization</h3>
+          <p>Variational Quantum Classifiers (VQC) suffer from barren plateaus (vanishing gradients). QSVM completely circumvents this: quantum hardware computes the kernel matrix, and a classical QP solver guarantees the global optimum!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Quantum Feature Maps -->
+    <div class="slide">
+      <div class="tag">Part 2: Quantum Data Encoding</div>
+      <h1>Quantum Feature Maps: Encoding Classical Data into Qubits</h1>
+      <p class="subtitle">Unitary mapping $U_\phi(x)$ transforming feature vector $\vec{x}$ into quantum state $|\psi(x)\rangle$.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--indigo);">Mathematical Formalism</h3>
+          <ul>
+            <li>Quantum state preparation:
+              $$|\psi(x)\rangle = U_\phi(x) |0\rangle^{\otimes n}$$
+            </li>
+            <li>Quantum kernel as transition probability (fidelity):
+              $$k(x, x') = |\langle \psi(x) | \psi(x') \rangle|^2 = |\langle 0|^{\otimes n} U_\phi^\dagger(x') U_\phi(x) |0\rangle^{\otimes n}|^2$$
+            </li>
+            <li><strong>Properties:</strong> Symmetric, strictly bounded in $[0, 1]$, and produces a positive semi-definite Gram matrix $K \ge 0$.</li>
+            <li>$k(x, x) = 1.0$ (identical vectors); $k(x, x') = 0.0$ (orthogonal quantum states).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--cyan);">Second-Order Pauli ZZ Feature Map</h3>
+          <ul>
+            <li>Circuit form: $U_\phi(x) = \left[ U_Z(x) H^{\otimes n} \right]^t$ ($t=2$ repetitions):</li>
+            <li><strong>1. Superposition:</strong> Hadamard gates $H^{\otimes n}$ place all qubits into equal superposition.</li>
+            <li><strong>2. Single-Qubit Phase:</strong> Encodes individual features:
+              $$\exp\left( i \sum_{i=1}^n x_i Z_i \right)$$
+            </li>
+            <li><strong>3. Two-Qubit Entanglement:</strong> Entangles adjacent pairs based on pairwise products:
+              $$\exp\left( i \sum_{i < j} (\pi - x_i)(\pi - x_j) Z_i Z_j \right)$$
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: Two Paradigms -->
+    <div class="slide">
+      <div class="tag">Part 3: QSVM Paradigms</div>
+      <h1>Two Formulations of Quantum SVM in Literature</h1>
+      <p class="subtitle">Comparing theoretical HHL least-squares QSVM with the NISQ-ready hybrid quantum kernel paradigm.</p>
+      <div class="grid-2">
+        <div class="card" style="border-color: rgba(251, 191, 36, 0.4);">
+          <h3 style="color: var(--amber);">Paradigm 1: HHL-Based Least-Squares QSVM</h3>
+          <div class="tag">Rebentrost, Mohseni, Lloyd (PRL, 2014)</div>
+          <ul>
+            <li>Recasts Least-Squares SVM as a linear system:
+              $$\begin{bmatrix} 0 & \mathbf{1}^T \\ \mathbf{1} & K + \gamma^{-1} I \end{bmatrix} \begin{bmatrix} b \\ \alpha \end{bmatrix} = \begin{bmatrix} 0 \\ y \end{bmatrix}$$
+            </li>
+            <li>Inverts matrix via quantum phase estimation and HHL algorithm in $O(\log(NM))$ runtime!</li>
+            <li><strong>Practical Obstacle:</strong> Requires fault-tolerant hardware, Quantum RAM (QRAM) for data loading, and low condition number $\kappa$.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: rgba(56, 189, 248, 0.4);">
+          <h3 style="color: var(--cyan);">Paradigm 2: Quantum Kernel Estimation (Our Implementation)</h3>
+          <div class="tag">Havlíček et al. (Nature, 2019) / Schuld & Killoran (2019)</div>
+          <ul>
+            <li><strong>Hybrid Architecture:</strong> Quantum computer computes the Gram matrix $K_{ij}$; classical solver solves the convex dual QP.</li>
+            <li><strong>NISQ Ready:</strong> Shallow circuit depth, requires zero QRAM, runs on near-term superconducting QPUs.</li>
+            <li><strong>Convex Global Optimum:</strong> Retains standard SVM convergence without barren plateaus.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: Circuit Implementation -->
+    <div class="slide">
+      <div class="tag">Part 3: Circuit Architecture</div>
+      <h1>The Compute-Uncompute Kernel Estimation Circuit</h1>
+      <p class="subtitle">Estimating state overlap using inversion testing without auxiliary ancilla qubits.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--indigo);">Compute-Uncompute Inversion Test</h3>
+          <div class="code-box">|0⟩ ──[ U_φ(x_j) ]──[ U_φ†(x_i) ]──[ ∡ ] ─> c_0
+|0⟩ ──[ U_φ(x_j) ]──[ U_φ†(x_i) ]──[ ∡ ] ─> c_1
+|0⟩ ──[ U_φ(x_j) ]──[ U_φ†(x_i) ]──[ ∡ ] ─> c_2
+|0⟩ ──[ U_φ(x_j) ]──[ U_φ†(x_i) ]──[ ∡ ] ─> c_3</div>
+          <ul style="margin-top: 0.8rem;">
+            <li>Applies unitary $U_\phi(x_j)$ followed by inverse unitary $U_\phi^\dagger(x_i)$ on ground state $|0000\rangle$.</li>
+            <li>If $x_i = x_j$, $U_\phi^\dagger(x_i) U_\phi(x_j) = I$ (returns to $|0000\rangle$ with probability 1.0).</li>
+            <li>The probability of measuring all zeros gives the fidelity: $P(|0\dots0\rangle) = k(x_i, x_j)$.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--emerald);">Advantages over SWAP Test</h3>
+          <ul>
+            <li><strong>Hardware Efficiency:</strong> SWAP test requires $2n + 1$ qubits (two registers + ancilla). Inversion test requires <strong>only $n$ qubits</strong>!</li>
+            <li><strong>Gate Count:</strong> Avoids expensive controlled-SWAP (Fredkin) gates.</li>
+            <li><strong>Sample Shots:</strong> Measuring $s$ shots gives empirical frequency $\hat{k}$. Statistical error scales as $O(1/\sqrt{s})$ ($s \approx 10,000$ for $\varepsilon=0.01$).</li>
+            <li><strong>Gram Matrix Construction:</strong> Symmetric $M \times M$ matrix requiring $M(M-1)/2$ off-diagonal circuits.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: Stock Market Application -->
+    <div class="slide">
+      <div class="tag">Part 4: Real-World Application</div>
+      <h1>Project Domain: Stock Market Trend Direction Classification</h1>
+      <p class="subtitle">Evaluating whether quantum non-linear kernels can predict daily price trajectory on Indian and US equities.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyan);">Binary Classification Formulation</h3>
+          <ul>
+            <li><strong>Target Objective:</strong> Predict next-day closing direction:
+              <ul>
+                <li><strong>Class 1 (UP):</strong> $\text{Close}_{t+1} > \text{Close}_t$</li>
+                <li><strong>Class 0 (DOWN):</strong> $\text{Close}_{t+1} \le \text{Close}_t$</li>
+              </ul>
+            </li>
+            <li><strong>Live Data Source:</strong> 5 Years of daily OHLCV historical feeds retrieved live via Yahoo Finance (<code>yfinance</code>).</li>
+            <li><strong>Indian Market (NSE):</strong> Reliance Industries, TCS, HDFC Bank, SBI, Infosys, ITC, Bharti Airtel, L&T, etc.</li>
+            <li><strong>US Market:</strong> Apple, Microsoft, NVIDIA, Google, Amazon, Tesla.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--rose);">Financial Time Series Reality</h3>
+          <ul>
+            <li><strong>Low Signal-to-Noise Ratio (SNR):</strong> Financial markets behave largely like Brownian motion random walks.</li>
+            <li><strong>The 50–55% Baseline Reality:</strong> Unlike deterministic physics benchmarks, predicting directional market moves with $>55\%$ out-of-sample accuracy is institutional-grade. A naive majority-class model yields $\sim 52\text{--}54\%$.</li>
+            <li><strong>Strict Chronological Split:</strong> Shuffled k-fold cross-validation is forbidden due to look-ahead bias. Training strictly precedes testing.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: Features & [0, pi] Scaling -->
+    <div class="slide">
+      <div class="tag">Part 4: Data Preprocessing</div>
+      <h1>Feature Engineering & The Crucial $[0, \pi]$ Quantum Scaling</h1>
+      <p class="subtitle">Extracting 4 technical indicators and mapping them monotonically onto the Bloch sphere.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--indigo);">4 Classical Technical Features</h3>
+          <ul>
+            <li><strong>1. RSI (14-day):</strong> Relative Strength Index measuring price momentum and overbought/oversold boundaries.</li>
+            <li><strong>2. MACD Histogram:</strong> Difference between (12-day EMA − 26-day EMA) and the 9-day signal EMA line.</li>
+            <li><strong>3. Moving Average Ratio:</strong> $\text{Close} / \text{SMA}(20)$ quantifying deviation from the short-term trend.</li>
+            <li><strong>4. Daily Volume % Change:</strong> Relative change in volume indicating breakout liquidity.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--amber);">Why Scale Features to $[0, \pi]$?</h3>
+          <ul>
+            <li><strong>Chronological Split:</strong> Most recent 350 trading days: <strong>first 250 days for training</strong>, <strong>last 100 days for testing</strong>.</li>
+            <li><strong>Periodic Phase Wrapping:</strong> Quantum phase gates rotate states as:
+              $$R_z(\theta) = \begin{bmatrix} e^{-i\theta/2} & 0 \\ 0 & e^{i\theta/2} \end{bmatrix}, \quad R_z(\theta + 2\pi) = R_z(\theta)$$
+            </li>
+            <li>If features are unscaled, extreme values wrap around $2\pi$, causing distinct data points to alias to the exact same quantum state!</li>
+            <li>Scaling strictly to $[0, \pi]$ guarantees monotonic separation on the Bloch sphere with <strong>zero phase aliasing</strong>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 11: 4-Qubit Circuit Mapping -->
+    <div class="slide">
+      <div class="tag">Part 5: Quantum Implementation</div>
+      <h1>4-Qubit Circuit Architecture for Stock Prediction</h1>
+      <p class="subtitle">Mapping classical indicators into quantum registers with nearest-neighbor linear entanglement.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyan);">Qubit Allocation & Hardware Coupling</h3>
+          <ul>
+            <li>$q_0 \leftrightarrow x_0$: Normalized RSI (14-day)</li>
+            <li>$q_1 \leftrightarrow x_1$: Normalized MACD Histogram</li>
+            <li>$q_2 \leftrightarrow x_2$: Normalized Moving Average Ratio</li>
+            <li>$q_3 \leftrightarrow x_3$: Normalized Daily Volume Change</li>
+            <li><strong>Nearest-Neighbor Linear Coupling:</strong>
+              <ul>
+                <li>Pair $(q_0, q_1)$: Entangles RSI momentum with MACD divergence.</li>
+                <li>Pair $(q_1, q_2)$: Entangles MACD with trend deviation.</li>
+                <li>Pair $(q_2, q_3)$: Entangles trend deviation with volume.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--emerald);">Circuit Complexity (2 Repetitions)</h3>
+          <ul>
+            <li><strong>Superposition Layer:</strong> 4 Hadamard gates.</li>
+            <li><strong>Single-Qubit Phase:</strong> 4 parameterised $P(2x_i)$ gates.</li>
+            <li><strong>Linear ZZ Entanglement:</strong>
+              <ul>
+                <li>3 pairs $\times$ [CNOT + $P(2(\pi-x_i)(\pi-x_j))$ + CNOT]</li>
+                <li>= 6 CNOT gates + 3 Phase gates per repetition.</li>
+              </ul>
+            </li>
+            <li><strong>Total Gate Count:</strong> 16 single-qubit gates + 12 CNOT gates.</li>
+            <li><strong>Hilbert Dimension:</strong> $2^4 = 16$-dimensional complex projective space.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 12: 700x Speedup -->
+    <div class="slide">
+      <div class="tag">Part 5: Engineering Innovation</div>
+      <h1>Simulation Optimization: Achieving a 700× Speedup</h1>
+      <p class="subtitle">Overcoming the 5-minute Qiskit bottleneck with vectorized Hermitian inner products.</p>
+      <div class="grid-2">
+        <div class="card" style="border-color: rgba(251, 113, 133, 0.4);">
+          <h3 style="color: var(--rose);">The Naive Qiskit Bottleneck</h3>
+          <ul>
+            <li>Training Gram Matrix: $250 \times 249 / 2 = 31,125$ circuit pairs.</li>
+            <li>Testing Gram Matrix: $100 \times 250 = 25,000$ circuit pairs.</li>
+            <li><strong>Total individual circuits:</strong> $>56,000$ circuits!</li>
+            <li>Evaluating 56,000 circuits sequentially in Python took <strong>>5 minutes</strong>, causing cloud server timeouts and introducing shot noise.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: rgba(52, 211, 153, 0.4);">
+          <h3 style="color: var(--emerald);">Vectorized Statevector Solution</h3>
+          <ul>
+            <li>Fidelity is analytically identical to the statevector dot product:
+              $$k(x_i, x_j) = |\langle \psi(x_i) | \psi(x_j) \rangle|^2$$
+            </li>
+            <li><strong>Step 1:</strong> Pre-generate all 250 training statevectors once into matrix $\Psi_{\text{train}} \in \mathbb{C}^{250 \times 16}$ (takes 0.3s).</li>
+            <li><strong>Step 2:</strong> Compute entire Gram matrix via BLAS matrix multiplication:
+              $$K_{\text{train}} = |\Psi_{\text{train}} \cdot \Psi_{\text{train}}^\dagger|^2 \quad (\text{takes } 0.005\text{s}!)$$
+            </li>
+            <li><strong>Result:</strong> Runtime dropped from $>5$ minutes to <strong>0.4 seconds (700× speedup)</strong> with zero shot noise!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 13: Empirical Results -->
+    <div class="slide">
+      <div class="tag">Part 6: Empirical Findings</div>
+      <h1>Experimental Results: QSVM vs Classical RBF SVM</h1>
+      <p class="subtitle">Benchmarking on 100 out-of-sample trading days across Indian and US equities.</p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Company / Ticker</th>
+            <th>Quantum SVM (QSVC)</th>
+            <th>Classical SVM (RBF)</th>
+            <th>Blind Guess Baseline</th>
+            <th>Verdict / Advantage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Reliance Industries Limited</strong> (RELIANCE.NS)</td>
+            <td style="color: var(--indigo); font-weight: bold;">41.0%</td>
+            <td style="color: var(--emerald); font-weight: bold;">54.0%</td>
+            <td style="color: var(--amber);">52.0% (Majority UP)</td>
+            <td>Classical RBF (+13.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>Apple Inc.</strong> (AAPL)</td>
+            <td style="color: var(--indigo); font-weight: bold;">50.0%</td>
+            <td style="color: var(--emerald); font-weight: bold;">57.0%</td>
+            <td style="color: var(--amber);">54.0% (Majority UP)</td>
+            <td>Classical RBF (+7.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>NVIDIA Corporation</strong> (NVDA)</td>
+            <td style="color: var(--indigo); font-weight: bold;">51.0%</td>
+            <td style="color: var(--emerald); font-weight: bold;">53.0%</td>
+            <td style="color: var(--amber);">53.0% (Majority DOWN)</td>
+            <td>Classical RBF (+2.0%)</td>
+          </tr>
+          <tr>
+            <td><strong>Tata Consultancy Services</strong> (TCS.NS)</td>
+            <td style="color: var(--indigo); font-weight: bold;">49.0%</td>
+            <td style="color: var(--emerald); font-weight: bold;">51.0%</td>
+            <td style="color: var(--amber);">51.0% (Majority UP)</td>
+            <td>Comparable Performance</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="card" style="margin-top: 1rem;">
+        <h3 style="color: var(--amber);">Academic Interpretation</h3>
+        <p>Consistent with Huang et al. (Nature Comm., 2021), classical RBF kernels provide strong margin regularization that smooths out Brownian noise in classical time series. The 4-qubit quantum kernel explores non-linear phase space, but high expressivity on noisy datasets without problem-specific inductive bias can fit noise.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 14: Application Demo -->
+    <div class="slide">
+      <div class="tag">Part 6: Application Engineering</div>
+      <h1>Full-Stack Streamlit Application Architecture</h1>
+      <p class="subtitle">Complete cloud-hosted software implementation deployed on Render and GitHub.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyan);">Interactive Capabilities</h3>
+          <ul>
+            <li><strong>Official Company Names:</strong> Dropdown with 17+ Indian companies (Reliance, TCS, HDFC Bank, SBI) and major US tech stocks.</li>
+            <li><strong>Dynamic Currencies:</strong> Formats prices in ₹ (INR) or $ (USD) based on market.</li>
+            <li><strong>Interactive Price Chart:</strong> Plotly chart with 🟢 Green dots (correct prediction) and 🔴 Red dots (mistake) with model switcher.</li>
+            <li><strong>Model Scorecards:</strong> Confusion matrix tables rendering True UP, True DOWN, False Positives, and False Negatives.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--indigo);">Cloud & Software Stack</h3>
+          <ul>
+            <li><strong>Streamlit App (<code>backend/app.py</code>):</strong> Serves interactive UI and runs fast quantum simulation.</li>
+            <li><strong>Qiskit 1.4 & Scikit-learn:</strong> Backend quantum and classical machine learning engines.</li>
+            <li><strong>Render Cloud Deployment:</strong> Live at <code>https://quantum-stock-classifier.onrender.com</code>.</li>
+            <li><strong>GitHub Repository:</strong> Version-controlled at <code>https://github.com/SANYAM-MANIT/quantum-stock-classifier</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 15: Limitations & Future Scope -->
+    <div class="slide">
+      <div class="tag">Critical Evaluation</div>
+      <h1>Challenges, NISQ Limitations & Future Scope</h1>
+      <p class="subtitle">Critical bottlenecks in near-term quantum computing and research directions for quantum advantage.</p>
+      <div class="grid-2">
+        <div class="card" style="border-color: rgba(251, 113, 133, 0.4);">
+          <h3 style="color: var(--rose);">NISQ Challenges</h3>
+          <ul>
+            <li><strong>Decoherence & Gate Errors:</strong> Two-qubit gate error rates ($\sim 10^{-2}$) accumulate as circuit depth increases.</li>
+            <li><strong>Exponential Kernel Concentration:</strong> Thanasilp et al. (2022) proved that as qubit count $n$ grows, quantum kernels concentrate exponentially around a constant, degrading trainability.</li>
+            <li><strong>Shot Noise:</strong> Finite sampling introduces $O(1/\sqrt{s})$ statistical variance.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: rgba(52, 211, 153, 0.4);">
+          <h3 style="color: var(--emerald);">Future Research Horizons</h3>
+          <ul>
+            <li><strong>Trainable Quantum Kernels:</strong> Optimizing parameterized rotation gates via Kernel Alignment with training labels $y_i y_j$.</li>
+            <li><strong>Problem-Informed Inductive Biases:</strong> Designing feature maps tailored to cross-asset covariance matrices rather than generic circuits.</li>
+            <li><strong>Fault-Tolerant HHL Execution:</strong> Realizing $O(\log(NM))$ runtime when logical qubits and QRAM become viable.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 16: Conclusion & References -->
+    <div class="slide">
+      <div class="tag">Conclusion</div>
+      <h1>Summary & Primary References</h1>
+      <p class="subtitle">Concluding insights from the MANIT CSE Minor Project.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyan);">Project Summary</h3>
+          <ul>
+            <li>Demonstrated end-to-end full-stack implementation of a 4-Qubit Quantum SVM on real market data.</li>
+            <li>Developed a 700× vectorized Hermitian statevector simulation algorithm.</li>
+            <li>Evaluated real equities under zero-leakage chronological constraints and $[0, \pi]$ scaling.</li>
+            <li>Deployed an open-source, interactive Streamlit tool on Render Cloud.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--indigo);">Key Academic References</h3>
+          <ul style="font-size: 0.8rem; line-height: 1.4;">
+            <li>[1] Cortes & Vapnik (1995). Support-Vector Networks. <em>Machine Learning</em>, 20(3).</li>
+            <li>[2] Rebentrost, Mohseni, Lloyd (2014). Quantum SVM for Big Data. <em>Phys. Rev. Lett.</em>, 113.</li>
+            <li>[3] Havlíček et al. (2019). Supervised learning with quantum-enhanced feature spaces. <em>Nature</em>, 567.</li>
+            <li>[4] Schuld & Killoran (2019). Quantum Machine Learning in Feature Hilbert Spaces. <em>PRL</em>, 122.</li>
+            <li>[5] Huang et al. (2021). Power of Data in Quantum Machine Learning. <em>Nature Comm.</em>, 12.</li>
+          </ul>
+          <div style="text-align: center; margin-top: 1rem; color: var(--amber); font-weight: 700;">
+            Thank You! Questions & Discussion.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation & Progress -->
+  <div id="progress-bar"></div>
+  <div id="controls">
+    <div>
+      <span id="slide-counter" style="font-weight: 700; color: #fff;">Slide 1 / 16</span>
+      <span style="margin-left: 1rem; color: var(--muted);">Use ◄ ► keys or Space to navigate</span>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn" onclick="prevSlide()">◀ Previous</button>
+      <button class="btn" onclick="nextSlide()">Next ▶</button>
+      <button class="btn" onclick="toggleFullScreen()" style="margin-left: 0.5rem; background: var(--indigo);">⛶ Fullscreen</button>
+    </div>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slide-counter');
+    const progressBar = document.getElementById('progress-bar');
+    let currentIdx = 0;
+
+    function updateSlide(newIdx) {
+      if (newIdx < 0 || newIdx >= slides.length) return;
+      slides[currentIdx].classList.remove('active');
+      currentIdx = newIdx;
+      slides[currentIdx].classList.add('active');
+      counter.innerText = `Slide ${currentIdx + 1} / ${slides.length}`;
+      progressBar.style.width = `${((currentIdx + 1) / slides.length) * 100}%`;
+    }
+
+    function prevSlide() { updateSlide(currentIdx - 1); }
+    function nextSlide() { updateSlide(currentIdx + 1); }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+
+    updateSlide(0);
+  </script>
+</body>
+</html>
