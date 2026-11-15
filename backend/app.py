@@ -408,32 +408,29 @@ with tab_acc:
     fig_bar.update_traces(textposition="outside")
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # Performance Table
+    # Performance Table (Custom Pure HTML to prevent pyarrow version conflicts)
     st.markdown("##### Detailed Metric Breakdown")
-    comp_table = pd.DataFrame({
-        "Performance Metric": [
-            "Accuracy (Overall Correct Guesses)",
-            "Precision (When model guessed UP, was it UP?)",
-            "Recall (Out of all real UP days, how many caught?)",
-            "F1 Score (Balanced Metric)",
-            "Simulation / Training Time"
-        ],
-        "Quantum SVM": [
-            f"{q_acc:.1f}%",
-            f"{qsvm['precision']*100:.1f}%",
-            f"{qsvm['recall']*100:.1f}%",
-            f"{qsvm['f1']*100:.1f}%",
-            f"{qsvm['training_time']:.2f}s"
-        ],
-        "Classical SVM": [
-            f"{c_acc:.1f}%",
-            f"{svm['precision']*100:.1f}%",
-            f"{svm['recall']*100:.1f}%",
-            f"{svm['f1']*100:.1f}%",
-            f"{svm['training_time']:.2f}s"
-        ]
-    })
-    st.table(comp_table)
+    st.markdown(
+        f"""
+        <table style="width:100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid #334155;">
+                    <th style="padding: 10px; text-align: left; color: #94a3b8;">Performance Metric</th>
+                    <th style="padding: 10px; text-align: center; color: #818cf8; font-weight: bold;">Quantum SVM (QSVC)</th>
+                    <th style="padding: 10px; text-align: center; color: #34d399; font-weight: bold;">Classical SVM (RBF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 10px; color: #f8fafc;">Accuracy (Overall Correct Guesses)</td><td align="center" style="font-weight: bold; color: #818cf8;">{q_acc:.1f}%</td><td align="center" style="font-weight: bold; color: #34d399;">{c_acc:.1f}%</td></tr>
+                <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 10px; color: #f8fafc;">Precision (When model guessed UP, was it UP?)</td><td align="center" style="color: #818cf8;">{qsvm['precision']*100:.1f}%</td><td align="center" style="color: #34d399;">{svm['precision']*100:.1f}%</td></tr>
+                <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 10px; color: #f8fafc;">Recall (Out of all real UP days, how many caught?)</td><td align="center" style="color: #818cf8;">{qsvm['recall']*100:.1f}%</td><td align="center" style="color: #34d399;">{svm['recall']*100:.1f}%</td></tr>
+                <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 10px; color: #f8fafc;">F1 Score (Balanced Metric)</td><td align="center" style="color: #818cf8;">{qsvm['f1']*100:.1f}%</td><td align="center" style="color: #34d399;">{svm['f1']*100:.1f}%</td></tr>
+                <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 10px; color: #f8fafc;">Simulation / Training Time</td><td align="center" style="color: #818cf8;">{qsvm['training_time']:.2f}s</td><td align="center" style="color: #34d399;">{svm['training_time']:.2f}s</td></tr>
+            </tbody>
+        </table>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ---------------------------------------------------------
 # Tab 3: Model Scorecards (Confusion Matrix)
@@ -451,15 +448,32 @@ with tab_matrix:
         st.markdown(f"##### {title}")
         st.caption(f"Score: **{total_correct}/100 Correct Predictions**")
 
-        cm_df = pd.DataFrame(
-            [
-                [f"✅ {tn} (True DOWN)", f"❌ {fp} (False UP)"],
-                [f"❌ {fn} (False DOWN)", f"✅ {tp} (True UP)"]
-            ],
-            index=["Actual DOWN", "Actual UP"],
-            columns=["Predicted DOWN", "Predicted UP"]
+        st.markdown(
+            f"""
+            <table style="width:100%; border-collapse: collapse; text-align: center; font-size: 0.85rem; margin-top: 8px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #334155;">
+                        <th style="padding: 8px; text-align: left; color: #94a3b8;">Actual \\ Predicted</th>
+                        <th style="padding: 8px; color: #cbd5e1;">Guessed DOWN</th>
+                        <th style="padding: 8px; color: #cbd5e1;">Guessed UP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #1e293b;">
+                        <td style="padding: 10px; text-align: left; font-weight: 600; color: #f8fafc;">Actually DOWN</td>
+                        <td style="padding: 10px; background-color: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: bold; border-radius: 6px;">✅ {tn}</td>
+                        <td style="padding: 10px; background-color: rgba(244, 63, 94, 0.15); color: #f43f5e; font-weight: bold; border-radius: 6px;">❌ {fp}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b;">
+                        <td style="padding: 10px; text-align: left; font-weight: 600; color: #f8fafc;">Actually UP</td>
+                        <td style="padding: 10px; background-color: rgba(244, 63, 94, 0.15); color: #f43f5e; font-weight: bold; border-radius: 6px;">❌ {fn}</td>
+                        <td style="padding: 10px; background-color: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: bold; border-radius: 6px;">✅ {tp}</td>
+                    </tr>
+                </tbody>
+            </table>
+            """,
+            unsafe_allow_html=True
         )
-        st.table(cm_df)
 
     with mat_col1:
         render_cm_display(qsvm["confusion_matrix"], "⚛️ Quantum SVM (4-Qubit Circuit)", "#818cf8")
